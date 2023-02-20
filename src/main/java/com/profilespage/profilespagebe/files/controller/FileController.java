@@ -3,6 +3,9 @@ package com.profilespage.profilespagebe.files.controller;
 import com.profilespage.profilespagebe.exception.UnprocessableEntityException;
 import com.profilespage.profilespagebe.files.model.File;
 import com.profilespage.profilespagebe.files.service.FileService;
+import com.profilespage.profilespagebe.files.service.impl.FileServiceImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
@@ -16,8 +19,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/files")
 public class FileController {
+    private final Logger logger = LoggerFactory.getLogger(FileController.class);
     private final FileService fileService;
-
     public FileController(FileService fileService) {
         this.fileService = fileService;
     }
@@ -28,14 +31,11 @@ public class FileController {
         if (errors.hasErrors()) {
             throw new UnprocessableEntityException(errors.toString());
         }
-        UUID id = fileService.uploadMetadata(file);
-        URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(id).toUri();
-        System.out.println(id);
-        System.out.println(uri);
+        URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(fileService.uploadMetadata(file)).toUri();
+        logger.debug("File saved at {}", uri);
         return ResponseEntity.created(uri).build();
     }
 
-    //    @CrossOrigin(origins = "*")
     @PutMapping(value = "/{id}", consumes = "*/*")
     public ResponseEntity<?> uploadContent(@PathVariable UUID id, @RequestBody byte[] content) {
         fileService.uploadContent(content, id);
